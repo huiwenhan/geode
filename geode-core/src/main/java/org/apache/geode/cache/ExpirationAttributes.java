@@ -91,7 +91,6 @@ public class ExpirationAttributes implements DataSerializable {
     }
   }
 
-
   /**
    * Returns the number of seconds before a region or value expires.
    *
@@ -147,12 +146,14 @@ public class ExpirationAttributes implements DataSerializable {
   }
 
 
+  @Override
   public void fromData(DataInput in) throws IOException, ClassNotFoundException {
     this.timeout = in.readInt();
     this.action = DataSerializer.readObject(in);
 
   }
 
+  @Override
   public void toData(DataOutput out) throws IOException {
     out.writeInt(this.timeout);
     DataSerializer.writeObject(this.action, out);

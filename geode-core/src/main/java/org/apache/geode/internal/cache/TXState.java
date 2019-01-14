@@ -1540,13 +1540,19 @@ public class TXState implements TXStateInterface {
         txr = txWriteRegion(internalRegion, keyInfo);
       }
       result = dataReg.createReadEntry(txr, keyInfo, createIfAbsent);
+      if (result == null) {
+        // createReadEntry will only returns null if createIfAbsent is false.
+        // CreateIfAbsent will only be false when this method is called by set operations.
+        // In that case we do not want the TXState to have a TXEntryState.
+        assert !createIfAbsent;
+        return result;
+      }
     }
 
     if (result != null) {
       if (expectedOldValue != null) {
         Object val = result.getNearSidePendingValue();
         if (!AbstractRegionEntry.checkExpectedOldValue(expectedOldValue, val, internalRegion)) {
-          txr.cleanupNonDirtyEntries(internalRegion);
           throw new EntryNotFoundException(
               "The current value was not equal to expected value.");
         }

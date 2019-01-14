@@ -793,6 +793,7 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
     return this.cache.isClosed();
   }
 
+  @Override
   public RegionEntry getRegionEntry(Object key) {
     return this.entries.getEntry(key);
   }
@@ -1967,6 +1968,7 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
     return getDataView().containsKey(getKeyInfo(key), this);
   }
 
+  @Override
   public boolean containsTombstone(Object key) {
     checkReadiness();
     checkForNoAccess();
@@ -2083,6 +2085,7 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
   /**
    * @return size after considering imageState
    */
+  @Override
   public int getRegionSize() {
     synchronized (getSizeGuard()) {
       int result = getRegionMap().size();
@@ -3562,6 +3565,7 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
    *
    * @since GemFire 5.1
    */
+  @Override
   public Object getValueOnDiskOrBuffer(Object key) throws EntryNotFoundException {
     // Ok for this to ignore tx state
     RegionEntry re = this.entries.getEntry(key);
@@ -5708,6 +5712,8 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
         logger.debug("caught concurrent modification attempt when applying {}", event);
       }
       notifyBridgeClients(event);
+      notifyGatewaySender(event.getOperation().isUpdate() ? EnumListenerEvent.AFTER_UPDATE
+          : EnumListenerEvent.AFTER_CREATE, event);
       return false;
     }
 
@@ -6204,8 +6210,7 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
   }
 
   protected void notifyGatewaySender(EnumListenerEvent operation, EntryEventImpl event) {
-    if (isPdxTypesRegion() || event.isConcurrencyConflict()) {
-      // isConcurrencyConflict is usually a concurrent cache modification problem
+    if (isPdxTypesRegion()) {
       return;
     }
 
@@ -6600,6 +6605,7 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
       // Notify clients only if its NOT a gateway event.
       if (event.getVersionTag() != null && !event.getVersionTag().isGatewayTag()) {
         notifyBridgeClients(event);
+        notifyGatewaySender(EnumListenerEvent.AFTER_DESTROY, event);
       }
       return true; // event was elided
 
@@ -10489,6 +10495,7 @@ public class LocalRegion extends AbstractRegion implements LoaderHelperFactory,
     return this.cacheServiceProfiles.getSnapshot();
   }
 
+  @Override
   public void addCacheServiceProfile(CacheServiceProfile profile) {
     cacheServiceProfileUpdateLock.lock();
     try {

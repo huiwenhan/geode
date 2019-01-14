@@ -393,12 +393,14 @@ public class GMSMembershipManager implements MembershipManager, Manager {
       upCall = up;
     }
 
+    @Override
     public void messageReceived(DistributionMessage msg) {
       // bug 36851 - notify failure detection that we've had contact from a member
       services.getHealthMonitor().contactedBy(msg.getSender());
       handleOrDeferMessage(msg);
     }
 
+    @Override
     public ClusterDistributionManager getDM() {
       return upCall.getDM();
     }
@@ -760,6 +762,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
 
 
   /** this is invoked by JoinLeave when there is a loss of quorum in the membership system */
+  @Override
   public void quorumLost(Collection<InternalDistributedMember> failures, NetView view) {
     // notify of quorum loss if split-brain detection is enabled (meaning we'll shut down) or
     // if the loss is more than one member
@@ -844,6 +847,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     processSurpriseConnect(member);
   }
 
+  @Override
   public void startupMessageFailed(DistributedMember mbr, String failureMessage) {
     // fix for bug #40666
     addShunnedMember((InternalDistributedMember) mbr);
@@ -866,6 +870,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    *
    * @param dm the member joining
    */
+  @Override
   public boolean addSurpriseMember(DistributedMember dm) {
     final InternalDistributedMember member = (InternalDistributedMember) dm;
     boolean warn = false;
@@ -1015,6 +1020,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     dispatchMessage(msg);
   }
 
+  @Override
   public void warnShun(DistributedMember m) {
     latestViewWriteLock.lock();
     try {
@@ -1223,6 +1229,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
   private final Object startupMutex = new Object();
 
 
+  @Override
   public void startEventProcessing() {
     // Only allow one thread to perform the work
     synchronized (startupMutex) {
@@ -1276,6 +1283,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
   }
 
 
+  @Override
   public void waitForEventProcessing() throws InterruptedException {
     // First check outside of a synchronized block. Cheaper and sufficient.
     if (Thread.interrupted())
@@ -1316,6 +1324,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     return this.startupMessages;
   }
 
+  @Override
   public ReadWriteLock getViewLock() {
     return this.latestViewLock;
   }
@@ -1324,6 +1333,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    * Returns a copy (possibly not current) of the current view (a list of
    * {@link DistributedMember}s)
    */
+  @Override
   public NetView getView() {
     // Grab the latest view under a mutex...
     NetView v;
@@ -1349,6 +1359,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    *
    * @return the lead member associated with the latest view
    */
+  @Override
   public DistributedMember getLeadMember() {
     latestViewReadLock.lock();
     try {
@@ -1377,6 +1388,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     }
   }
 
+  @Override
   public boolean memberExists(DistributedMember m) {
     latestViewReadLock.lock();
     NetView v = latestView;
@@ -1388,6 +1400,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    * Returns the identity associated with this member. WARNING: this value will be returned after
    * the channel is closed, but in that case it is good for logging purposes only. :-)
    */
+  @Override
   public InternalDistributedMember getLocalMember() {
     return address;
   }
@@ -1396,6 +1409,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     return services;
   }
 
+  @Override
   public void postConnect() {}
 
   /**
@@ -1430,6 +1444,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    *
    * @see SystemFailure#emergencyClose()
    */
+  @Override
   public void emergencyClose() {
     setShutdown();
 
@@ -1452,6 +1467,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    * in view management we add it as a shutdown member when we receive a shutdown message. This is
    * not the same as a SHUNNED member.
    */
+  @Override
   public void shutdownMessageReceived(InternalDistributedMember id, String reason) {
     if (logger.isDebugEnabled()) {
       logger.debug("Membership: recording shutdown status of {}", id);
@@ -1463,6 +1479,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     }
   }
 
+  @Override
   public void shutdown() {
     setShutdown();
     services.stop();
@@ -1500,6 +1517,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     }
   }
 
+  @Override
   public void uncleanShutdown(String reason, final Exception e) {
     inhibitForcedDisconnectLogging(false);
 
@@ -1580,6 +1598,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     }
   }
 
+  @Override
   public boolean requestMemberRemoval(DistributedMember mbr, String reason) {
     if (mbr.equals(this.address)) {
       return false;
@@ -1617,12 +1636,14 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     return true;
   }
 
+  @Override
   public void suspectMembers(Set members, String reason) {
     for (final Object member : members) {
       verifyMember((DistributedMember) member, reason);
     }
   }
 
+  @Override
   public void suspectMember(DistributedMember mbr, String reason) {
     if (!this.shutdownInProgress && !this.shutdownMembers.containsKey(mbr)) {
       verifyMember(mbr, reason);
@@ -1640,6 +1661,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    *
    * @return true if the member checks out
    */
+  @Override
   public boolean verifyMember(DistributedMember mbr, String reason) {
     return mbr != null && memberExists(mbr)
         && this.services.getHealthMonitor().checkIfAvailable(mbr, reason, true);
@@ -1752,6 +1774,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    *
    * @see org.apache.geode.distributed.internal.membership.MembershipManager#isConnected()
    */
+  @Override
   public boolean isConnected() {
     return (this.hasJoined && !this.shutdownInProgress);
   }
@@ -1760,6 +1783,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    * Returns true if the distributed system is in the process of auto-reconnecting. Otherwise
    * returns false.
    */
+  @Override
   public boolean isReconnectingDS() {
     return !this.hasJoined && this.wasReconnectingSystem;
   }
@@ -1787,6 +1811,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     }
   }
 
+  @Override
   public Set<InternalDistributedMember> send(InternalDistributedMember[] destinations,
       DistributionMessage msg, DMStats theStats) throws NotSerializableException {
     Set<InternalDistributedMember> result;
@@ -1898,6 +1923,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     return forceUseUDPMessaging.get();
   }
 
+  @Override
   public void setShutdown() {
     latestViewWriteLock.lock();
     shutdownInProgress = true;
@@ -1977,6 +2003,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    *
    * @return true if the given member is a zombie
    */
+  @Override
   public boolean isShunned(DistributedMember m) {
     if (!shunnedMembers.containsKey(m)) {
       return false;
@@ -2026,6 +2053,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    * @param m the member in question
    * @return true if the given member is a surprise member
    */
+  @Override
   public boolean isSurpriseMember(DistributedMember m) {
     latestViewReadLock.lock();
     try {
@@ -2047,6 +2075,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    * @param m the member ID to add
    * @param birthTime the millisecond clock time that the member was first seen
    */
+  @Override
   public void addSurpriseMemberForTesting(DistributedMember m, long birthTime) {
     if (logger.isDebugEnabled()) {
       logger.debug("test hook is adding surprise member {} birthTime={}", m, birthTime);
@@ -2154,6 +2183,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
   /*
    * non-thread-owned serial channels and high priority channels are not included
    */
+  @Override
   public Map<String, Long> getMessageState(DistributedMember member, boolean includeMulticast) {
     Map<String, Long> result = new HashMap<>();
     DirectChannel dc = directChannel;
@@ -2165,6 +2195,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     return result;
   }
 
+  @Override
   public void waitForMessageState(DistributedMember otherMember, Map<String, Long> state)
       throws InterruptedException {
     if (Thread.interrupted())
@@ -2190,6 +2221,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    * org.apache.geode.distributed.internal.membership.MembershipManager#waitForDeparture(org.apache.
    * geode.distributed.DistributedMember)
    */
+  @Override
   public boolean waitForDeparture(DistributedMember mbr)
       throws TimeoutException, InterruptedException {
     int memberTimeout = this.services.getConfig().getDistributionConfig().getMemberTimeout();
@@ -2204,6 +2236,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
    * org.apache.geode.distributed.internal.membership.MembershipManager#waitForDeparture(org.apache.
    * geode.distributed.DistributedMember)
    */
+  @Override
   public boolean waitForDeparture(DistributedMember mbr, int timeoutMs)
       throws TimeoutException, InterruptedException {
     if (Thread.interrupted())
@@ -2268,6 +2301,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
       final boolean done[] = new boolean[1];
       final FlushingMessage msg = new FlushingMessage(done);
       serialQueue.add(new SizeableRunnable(100) {
+        @Override
         public void run() {
           msg.invoke();
         }
@@ -2288,6 +2322,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
 
 
   // TODO GEODE-1752 rewrite this to get rid of the latches, which are currently a memory leak
+  @Override
   public boolean waitForNewMember(InternalDistributedMember remoteId) {
     boolean foundRemoteId = false;
     CountDownLatch currentLatch = null;
@@ -2330,10 +2365,12 @@ public class GMSMembershipManager implements MembershipManager, Manager {
   }
 
   /* returns the cause of shutdown, if known */
+  @Override
   public Throwable getShutdownCause() {
     return services.getShutdownCause();
   }
 
+  @Override
   public void registerTestHook(MembershipTestHook mth) {
     // lock for additions to avoid races during startup
     latestViewWriteLock.lock();
@@ -2350,6 +2387,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     }
   }
 
+  @Override
   public void unregisterTestHook(MembershipTestHook mth) {
     latestViewWriteLock.lock();
     try {
@@ -2420,6 +2458,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
   /**
    * Test hook
    */
+  @Override
   public boolean isBeingSick() {
     return this.beingSick;
   }
@@ -2557,6 +2596,7 @@ public class GMSMembershipManager implements MembershipManager, Manager {
     return shutdownInProgress || (dm != null && dm.isShutdownStarted());
   }
 
+  @Override
   public void disconnect(boolean beforeJoined) {
     if (beforeJoined) {
       uncleanShutdown("Failed to start distribution", null);

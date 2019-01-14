@@ -12,17 +12,17 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+package org.apache.geode.connectors.util.internal;
 
-package org.apache.geode.annotations;
+public final class MappingConstants {
+  public static final String REGION_NAME = "region";
+  public static final String PDX_NAME = "pdx-name";
+  public static final String TABLE_NAME = "table";
+  public static final String DATA_SOURCE_NAME = "data-source";
+  public static final String SYNCHRONOUS_NAME = "synchronous";
+  public static final String ID_NAME = "id";
+  public static final String SCHEMA_NAME = "schema";
+  public static final String CATALOG_NAME = "catalog";
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Target;
-
-@Documented
-@Target({ElementType.TYPE, ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.FIELD})
-public @interface TestingOnly {
-
-  /** Optional description */
-  String value() default "";
+  private MappingConstants() {}
 }

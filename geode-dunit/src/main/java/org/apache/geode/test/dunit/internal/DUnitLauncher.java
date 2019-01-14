@@ -94,6 +94,11 @@ public class DUnitLauncher {
   public static int NUM_VMS = 4;
 
   /**
+   * VM ID for the VM to use for the debugger.
+   */
+  static final int DEBUGGING_VM_NUM = -1;
+
+  /**
    * VM ID for the VM to use for the locator.
    */
   static final int LOCATOR_VM_NUM = -2;
@@ -271,6 +276,7 @@ public class DUnitLauncher {
     final File locatorLogFile =
         LOCATOR_LOG_TO_DISK ? new File("locator-" + locatorPort + ".log") : new File("");
     MethodInvokerResult result = remote.executeMethodOnObject(new SerializableCallable() {
+      @Override
       public Object call() throws IOException {
         Properties p = getDistributedSystemProperties();
         // I never want this locator to end up starting a jmx manager
